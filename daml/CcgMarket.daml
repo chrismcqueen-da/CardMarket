@@ -18,7 +18,6 @@ template ProposeMarket
             do
               create $ Marketplace manager auditor [] [] [] []
 
-
 template Marketplace
     with
         manager: Party
