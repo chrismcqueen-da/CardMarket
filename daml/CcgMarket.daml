@@ -1,8 +1,4 @@
-{-# LANGUAGE ApplicativeDo #-}
-
-daml 1.2
-module CcgMarket
-where
+module CcgMarket where
 
 data CardDescription = CardDescription with
     publisher: Party
