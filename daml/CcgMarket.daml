@@ -102,26 +102,11 @@ template Marketplace
           controller manager, auditor
             do
               card <- fetch cardId
-              assert $ card.manager == manager
-              assert $ card.auditor == auditor
+              assertMsg "Issue with card" $ card.manager == manager
+              assertMsg "Issue with card" $ card.auditor == auditor
 
               exercise cardId Archive
               create card with owner; description              
-
-
-        -- controller manager, auditor can
-        --     UpdateCard: ContractId Card
-        --         with
-        --             cardId: ContractId Card
-        --             owner: Party
-        --             description: CardDescription
-        --         do
-        --             card <- fetch cardId
-        --             assert $ card.manager == manager
-        --             assert $ card.auditor == auditor
-
-        --             exercise cardId Archive
-        --             create card with owner; description
 
 template CardOffer
     with
