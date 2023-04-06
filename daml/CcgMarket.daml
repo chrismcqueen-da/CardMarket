@@ -14,7 +14,7 @@ template ProposeMarket
         ensure manager /= auditor
 
         choice AcceptMarket : ContractId Marketplace with
-         controller auditor
+          controller auditor
             do
               create $ Marketplace manager auditor [] [] [] []
 
@@ -31,30 +31,31 @@ template Marketplace
         observer players <> publishers <> invitedPlayers <> invitedPublishers
 
         nonconsuming choice IssueCard: ContractId CardOffer
-            with
-                owner: Party
-                description: CardDescription
-            controller description.publisher
+          with
+            owner: Party
+            description: CardDescription
+          controller description.publisher
             do
-                assert $ description.publisher `elem` publishers
-                create CardOffer with manager; auditor; owner; description
+              assert $ description.publisher `elem` publishers
+              create CardOffer with manager; auditor; owner; description
 
-        nonconsuming choice SettleSwapObligation : (ContractId Card, ContractId Card) with
-           obligation: ContractId SwapObligation
-           card1Id: ContractId Card
-           card2Id: ContractId Card
-         controller manager
+        nonconsuming choice SettleSwapObligation : (ContractId Card, ContractId Card) 
+          with
+            obligation: ContractId SwapObligation
+            card1Id: ContractId Card
+            card2Id: ContractId Card
+          controller manager
             do
               exercise obligation SettleObligation with card1Id; card2Id
 
         choice InvitePublisher: ContractId Marketplace
-            with
-              invitee: Party
-            controller manager
-              do
-                assert $ invitee `notElem` publishers
-                assert $ invitee `notElem` invitedPublishers
-                create this with invitedPublishers = invitee :: invitedPublishers
+          with
+            invitee: Party
+          controller manager
+            do
+              assert $ invitee `notElem` publishers
+              assert $ invitee `notElem` invitedPublishers
+              create this with invitedPublishers = invitee :: invitedPublishers
 
         choice InvitePlayer: ContractId Marketplace
           with
@@ -67,23 +68,23 @@ template Marketplace
 
         choice AcceptPublisher: ContractId Marketplace
             with
-                accepter: Party
+              accepter: Party
             controller accepter
               do
                 assert $ accepter `elem` invitedPublishers
                 create this with
-                    publishers = accepter :: publishers
-                    invitedPublishers = filter ((/=) accepter) invitedPublishers
+                  publishers = accepter :: publishers
+                  invitedPublishers = filter ((/=) accepter) invitedPublishers
         
         choice AcceptPlayer: ContractId Marketplace
-            with
-                accepter: Party
-            controller accepter
-              do
-                assert $ accepter `elem` invitedPlayers
-                create this with
-                    players = accepter :: players
-                    invitedPlayers = filter ((/=) accepter) invitedPlayers
+          with
+            accepter: Party
+          controller accepter
+            do
+              assert $ accepter `elem` invitedPlayers
+              create this with
+                players = accepter :: players
+                invitedPlayers = filter ((/=) accepter) invitedPlayers
         
         choice UpdateCard: ContractId Card
           with
@@ -101,39 +102,39 @@ template Marketplace
 
 template CardOffer
     with
-        manager: Party
-        auditor: Party
-        owner: Party
-        description: CardDescription
+      manager: Party
+      auditor: Party
+      owner: Party
+      description: CardDescription
     where
-        signatory manager, auditor, description.publisher
-        observer owner
+      signatory manager, auditor, description.publisher
+      observer owner
 
-        choice AcceptCard: ContractId Card 
+      choice AcceptCard: ContractId Card 
 
-          controller owner 
-            do
-              create Card with manager; auditor; owner; description
+        controller owner 
+          do
+            create Card with manager; auditor; owner; description
 
 template Card
     with
-        manager: Party
-        auditor: Party
-        owner: Party
-        description: CardDescription
+      manager: Party
+      auditor: Party
+      owner: Party
+      description: CardDescription
     where
         signatory manager, auditor, description.publisher, owner
 
         choice TransferCard: ContractId Card
-            with
-                recipent: Party
-            controller [ manager, auditor, owner, recipent ]
+          with
+            recipent: Party
+          controller [ manager, auditor, owner, recipent ]
             do
-                create Card with
-                    manager
-                    auditor
-                    owner = recipent
-                    description
+              create Card with
+                manager
+                auditor
+                owner = recipent
+                description
 
 template SwapOfferToTreat
     with
