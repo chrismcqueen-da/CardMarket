@@ -55,15 +55,6 @@ template Marketplace
          controller manager
             do
               exercise obligation SettleObligation with card1Id; card2Id
-              
-        -- controller manager can
-        --     nonconsuming SettleSwapObligation: (ContractId Card, ContractId Card)
-        --         with
-        --             obligation: ContractId SwapObligation
-        --             card1Id: ContractId Card
-        --             card2Id: ContractId Card
-        --         do
-        --             exercise obligation SettleObligation with card1Id; card2Id
 
         choice InvitePublisher: ContractId Marketplace
             with
@@ -87,7 +78,7 @@ template Marketplace
             with
                 accepter: Party
             controller accepter
-            do
+              do
                 assert $ accepter `elem` invitedPublishers
                 create this with
                     publishers = accepter :: publishers
@@ -97,25 +88,40 @@ template Marketplace
             with
                 accepter: Party
             controller accepter
-            do
+              do
                 assert $ accepter `elem` invitedPlayers
                 create this with
                     players = accepter :: players
                     invitedPlayers = filter ((/=) accepter) invitedPlayers
         
-        controller manager, auditor can
-            UpdateCard: ContractId Card
-                with
-                    cardId: ContractId Card
-                    owner: Party
-                    description: CardDescription
-                do
-                    card <- fetch cardId
-                    assert $ card.manager == manager
-                    assert $ card.auditor == auditor
+        choice UpdateCard: ContractId Card
+          with
+            cardId: ContractId Card
+            owner: Party
+            description: CardDescription            
+          controller manager, auditor
+            do
+              card <- fetch cardId
+              assert $ card.manager == manager
+              assert $ card.auditor == auditor
 
-                    exercise cardId Archive
-                    create card with owner; description
+              exercise cardId Archive
+              create card with owner; description              
+
+
+        -- controller manager, auditor can
+        --     UpdateCard: ContractId Card
+        --         with
+        --             cardId: ContractId Card
+        --             owner: Party
+        --             description: CardDescription
+        --         do
+        --             card <- fetch cardId
+        --             assert $ card.manager == manager
+        --             assert $ card.auditor == auditor
+
+        --             exercise cardId Archive
+        --             create card with owner; description
 
 template CardOffer
     with
@@ -127,9 +133,11 @@ template CardOffer
         signatory manager, auditor, description.publisher
         observer owner
 
-        controller owner can
-            AcceptCard: ContractId Card do
-                create Card with manager; auditor; owner; description
+        choice AcceptCard: ContractId Card 
+
+          controller owner 
+            do
+              create Card with manager; auditor; owner; description
 
 template Card
     with
@@ -167,10 +175,10 @@ template SwapOfferToTreat
                 counterCard: Card
             controller counter
                 do
-                    assert $ card.manager == counterCard.manager
-                    assert $ card.auditor  == counterCard.auditor
-                    assert $ card.owner    == player
-                    assert $ counterCard.owner    == counter
+                    assertMsg "Card manager has an issue" $ card.manager == counterCard.manager
+                    assertMsg "Card auditor has an issue" $ card.auditor == counterCard.auditor
+                    assertMsg "Card owner has an issue" $ card.owner == player
+                    assertMsg "Card counter has an issue" $ counterCard.owner == counter
 
                     create SwapOfferToContract with player; offerId = self; counter; counterCard
         
@@ -184,23 +192,24 @@ template SwapOfferToContract
         signatory counter
         ensure counterCard.owner == counter
 
-        controller player can
-            AcceptProposal: ContractId SwapObligation
-                do
-                    offer <- fetch offerId
-                    assert $ offer.card.manager == counterCard.manager
-                    assert $ offer.card.auditor == counterCard.auditor
-                    assert $ offer.card.owner == player
-                    assert $ counterCard.owner == counter
+        choice AcceptProposal: ContractId SwapObligation
+        
+          controller player
+            do
+              offer <- fetch offerId
+              assertMsg "issue with proposal" $ offer.card.manager == counterCard.manager
+              assertMsg "issue with proposal" $ offer.card.auditor == counterCard.auditor
+              assertMsg "issue with proposal" $ offer.card.owner == player
+              assertMsg "issue with proposal" $ counterCard.owner == counter
 
-                    exercise offerId Archive
-                    create SwapObligation with
-                        manager = counterCard.manager
-                        auditor = counterCard.auditor
-                        party1 = player
-                        card1 = offer.card
-                        party2 = counter
-                        card2 = counterCard
+              exercise offerId Archive
+              create SwapObligation with
+                  manager = counterCard.manager
+                  auditor = counterCard.auditor
+                  party1 = player
+                  card1 = offer.card
+                  party2 = counter
+                  card2 = counterCard
 
 template SwapObligation
     with
@@ -213,16 +222,16 @@ template SwapObligation
     where
         signatory party1, party2
 
-        controller manager, auditor can
-            SettleObligation: (ContractId Card, ContractId Card)
-                with
-                    card1Id: ContractId Card
-                    card2Id: ContractId Card
-                do
-                    ledgerCard1 <- fetch card1Id
-                    assert $ card1 == ledgerCard1
-                    ledgerCard2 <- fetch card2Id
-                    assert $ card2 == ledgerCard2
-                    
-                    (,) <$> exercise card2Id TransferCard with recipent = party1
-                        <*> exercise card1Id TransferCard with recipent = party2
+        choice SettleObligation: (ContractId Card, ContractId Card)
+          with
+            card1Id: ContractId Card
+            card2Id: ContractId Card
+          controller manager, auditor    
+            do
+              ledgerCard1 <- fetch card1Id
+              assert $ card1 == ledgerCard1
+              ledgerCard2 <- fetch card2Id
+              assert $ card2 == ledgerCard2
+              
+              (,) <$> exercise card2Id TransferCard with recipent = party1
+                  <*> exercise card1Id TransferCard with recipent = party2
