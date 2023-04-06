@@ -229,9 +229,9 @@ template SwapObligation
           controller manager, auditor    
             do
               ledgerCard1 <- fetch card1Id
-              assert $ card1 == ledgerCard1
+              assertMsg "Issue with card" $ card1 == ledgerCard1
               ledgerCard2 <- fetch card2Id
-              assert $ card2 == ledgerCard2
+              assertMsg "Issue with card" $ card2 == ledgerCard2
               
               (,) <$> exercise card2Id TransferCard with recipent = party1
                   <*> exercise card1Id TransferCard with recipent = party2
