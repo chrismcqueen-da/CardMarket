@@ -48,30 +48,40 @@ template Marketplace
                 assert $ description.publisher `elem` publishers
                 create CardOffer with manager; auditor; owner; description
 
-        controller manager can
-            nonconsuming SettleSwapObligation: (ContractId Card, ContractId Card)
-                with
-                    obligation: ContractId SwapObligation
-                    card1Id: ContractId Card
-                    card2Id: ContractId Card
-                do
-                    exercise obligation SettleObligation with card1Id; card2Id
+        nonconsuming choice SettleSwapObligation : (ContractId Card, ContractId Card) with
+           obligation: ContractId SwapObligation
+           card1Id: ContractId Card
+           card2Id: ContractId Card
+         controller manager
+            do
+              exercise obligation SettleObligation with card1Id; card2Id
+              
+        -- controller manager can
+        --     nonconsuming SettleSwapObligation: (ContractId Card, ContractId Card)
+        --         with
+        --             obligation: ContractId SwapObligation
+        --             card1Id: ContractId Card
+        --             card2Id: ContractId Card
+        --         do
+        --             exercise obligation SettleObligation with card1Id; card2Id
 
-            InvitePublisher: ContractId Marketplace
-                with
-                    invitee: Party
-                do
-                    assert $ invitee `notElem` publishers
-                    assert $ invitee `notElem` invitedPublishers
-                    create this with invitedPublishers = invitee :: invitedPublishers
+        choice InvitePublisher: ContractId Marketplace
+            with
+              invitee: Party
+            controller manager
+              do
+                assert $ invitee `notElem` publishers
+                assert $ invitee `notElem` invitedPublishers
+                create this with invitedPublishers = invitee :: invitedPublishers
 
-            InvitePlayer: ContractId Marketplace
-                with
-                    invitee: Party
-                do
-                    assert $ invitee `notElem` publishers
-                    assert $ invitee `notElem` invitedPlayers
-                    create this with invitedPlayers = invitee :: invitedPlayers
+        choice InvitePlayer: ContractId Marketplace
+          with
+            invitee: Party
+          controller manager
+            do
+              assert $ invitee `notElem` publishers
+              assert $ invitee `notElem` invitedPlayers
+              create this with invitedPlayers = invitee :: invitedPlayers
 
         choice AcceptPublisher: ContractId Marketplace
             with
