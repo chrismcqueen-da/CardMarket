@@ -21,7 +21,7 @@ template ProposeMarket
          controller auditor
             do
               create $ Marketplace manager auditor [] [] [] []
-        
+
 
 template Marketplace
     with
